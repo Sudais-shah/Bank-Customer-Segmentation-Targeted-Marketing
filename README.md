@@ -1,103 +1,184 @@
-# Bank-Customer-Segmentation-Targeted-Marketing-model
+# Bank Customer Segmentation & Targeted Marketing (Production-Ready ML API)
 
 ## 🧠 Project Overview
-This project aims to segment credit card customers into distinct groups using unsupervised machine learning, specifically KMeans clustering, to assist financial institutions in crafting targeted marketing strategies, improving customer engagement, and reducing churn.
+This project implements an **end-to-end customer segmentation system** for credit card users using **unsupervised machine learning (KMeans)** and deploys it as a **production-ready FastAPI service**.
 
-## 📌 Objectives
-- Perform end-to-end customer segmentation using clustering.
+The goal is not just clustering, but **turning clusters into actionable business segments** that can be consumed by downstream systems (CRM, marketing engines, dashboards).
 
-- Engineer meaningful features from raw financial attributes.
+---
 
-- Compare multiple scaling techniques and evaluate clustering quality.
+## 🎯 Business Problem
+Banks often treat all customers the same.
 
-- Profile each customer segment with actionable business insights.
+This leads to:
+- Poor targeting
+- Low engagement
+- Missed high-value customers
+- Increased churn
+
+This project solves that by:
+- Segmenting customers based on spending behavior
+- Mapping each segment to **clear marketing strategies**
+- Serving predictions via an API for real-world integration
+
+---
 
 ## 🗃️ Dataset Summary
-- Source: Kaggle (Credit Card Dataset for Clustering)
+- **Source:** Kaggle – Credit Card Dataset for Clustering
+- **Rows:** 8,950
+- **Columns:** 18
+- **Learning Type:** Unsupervised (No target variable)
 
-- Rows: 8,950 | Columns: 18
+Key features include:
+`BALANCE`, `PURCHASES`, `CREDIT_LIMIT`, `PAYMENTS`, `CASH_ADVANCE`, etc.
 
-- Target Variable: None (unsupervised learning)
+---
 
-- Key Features: BALANCE, PURCHASES, PAYMENTS, CREDIT_LIMIT, etc.
+## 🧩 Key Components
 
-## 🔧 Tools & Technologies
+### 1️⃣ Data Cleaning & Feature Engineering
+- Handled missing values
+- Removed irrelevant identifiers (e.g., `CUST_ID`)
+- Engineered business-driven features:
+  - `CREDIT_UTILIZATION`
+  - `PAYMENT_RATIO`
+  - `CASH_USAGE_RATIO`
+  - `ACTIVITY_INDEX`
+- Applied **frozen IQR caps** to control outliers consistently in production
 
-- Pandas, NumPy – Data Cleaning & Preprocessing
+---
 
-- Matplotlib, Seaborn – Data Visualization
+### 2️⃣ Clustering Strategy
+- Compared multiple preprocessing strategies:
+  - No scaling
+  - MinMaxScaler
+  - RobustScaler
+  - Log transformation
+- Evaluated using **Silhouette Score**
+- Final selection prioritized:
+  - Interpretability
+  - Stability
+  - Business usefulness
 
-- Scikit-learn – Feature Scaling & Clustering
+#### 📌 Final Model Choice
+| Approach | Clusters | Silhouette |
+|--------|----------|------------|
+| Cleaned (No Scaling) | 3 | ~0.44 ✅ |
 
-- Silhouette Score – Clustering Evaluation
+---
 
-## 📊 Key Steps
-- EDA & Data Cleaning
+### 3️⃣ Cluster Profiles (Business Interpretation)
 
-Detected and handled missing values
+#### 🟡 Cluster 0 — Moderate Users
+- Mid-range balances
+- Moderate purchases
+- Higher cash advance usage  
+**Strategy:** Promote installment plans and balance-transfer offers
 
-Removed irrelevant columns (e.g., CUST_ID)
+#### 🔵 Cluster 1 — Low-Activity Users
+- Low balances
+- Low spending
+- Smaller credit limits  
+**Strategy:** Welcome rewards, cashback incentives
 
-Explored skewness, kurtosis, and outliers
+#### 🟢 Cluster 2 — High-Value Spenders
+- Highest purchase volume
+- High purchase frequency
+- Large credit limits  
+**Strategy:** Exclusive rewards, concierge services, premium upgrades
 
-- Feature Engineering
+---
 
-Derived meaningful ratios (e.g., CASH_USAGE_RATIO, PAYMENT_RATIO)
+## 🚀 Model Deployment (Core Highlight)
 
-Created ACTIVITY_INDEX as an overall usage indicator
+The trained clustering model is deployed as a **FastAPI service**.
 
-- Scaling Comparison
+### ✅ API Capabilities
+- Accepts **batch customer data**
+- Performs:
+  - Schema validation (Pydantic)
+  - Column alignment
+  - Numeric & range validation
+  - Feature engineering
+  - Scaling
+  - Cluster prediction
+- Returns:
+  - Cluster ID
+  - Segment name
+  - Behavior summary
+  - Marketing strategy
 
-Tested StandardScaler, MinMaxScaler, and RobustScaler
+### Example Response
+{
+  "results": [
+    {
+      "cluster": 2,
+      "segment_name": "High-Value Spenders",
+      "behavior": "Highest purchase volumes and frequency",
+      "marketing_strategy": "Exclusive rewards and concierge services"
+    }
+  ],
+  "ignored_columns": [],
+  "model_version": "1.0.0"
+}
 
-Also compared with log-transformed data and no-scaling baseline
+🛡️ Production-Grade Practices Implemented
 
-Evaluated performance using Silhouette Score
+✔ Frozen preprocessing logic (no training–serving skew)
+✔ Artifact versioning (model.pkl, scaler.pkl, iqr_caps.pkl)
+✔ Strong input validation
+✔ Defensive handling of extra/missing columns
+✔ Structured logging for traceability
+✔ Clean project structure (src/, api/, artifacts/)
 
-- Final Model Selection
 
-Chose 3 clusters on the cleaned dataset without scaling
+📂 Project Structure
 
-This version offered a balance of high silhouette score and better interpretability
-
-Customer Profiling
-
-Identified strategic personas for each segment
-
-Developed insights for marketing, risk management, and retention
-
-## 📌 Key Results
-Approach	Clusters	Silhouette Score
-Cleaned + MinMax	2	~25
-Cleaned (No Scaling)	2	45
-Cleaned (No Scaling)	3	44 ✅
-Log Transformed	8	47
-
-## Final Choice: Cleaned Dataset (No Scaling) with 3 Clusters
-
-🔍 Business Impact
-🎯 Segmented Customers for more targeted credit card offers
-
-💼 Identified Outliers for risk analysis and fraud monitoring
-
-📈 Enhanced Customer Understanding for strategic decision-making
-
-## Folder Structure
 project/
 │
-├── data/
-│   └── raw, processed/
+├── api/
+│   └── main.py
+│
+├── src/
+│   ├── preprocessing.py
+│   ├── predict.py
+│   ├── validators.py
+│   ├── schemas.py
+│   ├── cluster_profiles.py
+│   └── logger.py
+│
+├── artifacts/
+│   ├── model.pkl
+│   ├── scaler.pkl
+│   └── iqr_caps.pkl
 │
 ├── notebooks/
-│   └── EDA.ipynb
-│   └── Feature_Engineering.ipynb
-│   └── Clustering_Evaluation.ipynb
+│   ├── EDA.ipynb
+│   ├── Feature_Engineering.ipynb
+│   ├── Clustering_Evaluation.ipynb
 │   └── Customer_Profiling.ipynb
 │
-├── outputs/
-│   └── Charts, Cluster Plots
-    └──model
-│
 ├── README.md
-## 📬 Let's Connect
-- 📌 Connect on LinkedIn : https://www.linkedin.com/in/sudais-shah-938b9a312/
+
+
+🔍 Monitoring & Observability (Planned)
+Runtime monitoring (data drift, cluster distribution tracking) was intentionally excluded to keep this deployment lightweight.
+A follow-up project will integrate MLflow for:
+
+- Experiment tracking
+- Model versioning
+- Metrics comparison
+- Lifecycle management
+ 
+🧠 Skills Demonstrated
+- Machine Learning (Unsupervised)
+- Feature Engineering
+- Model Evaluation
+- Production ML Design
+- FastAPI Deployment
+- Data Validation
+- Logging & Error Handling
+- Business-Oriented ML Thinking
+
+📬 Let's Connect
+LinkedIn: https://www.linkedin.com/in/sudais-shah-938b9a312/
